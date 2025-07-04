@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const JWT_SECRET = "Smit_Project";
+const JWT_SECRET = process.env.JWT_SECRET;
 const nodemailer = require("nodemailer");
 const cloudinaryModule = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -16,9 +16,9 @@ const getStream = require('get-stream');
 
 
 cloudinaryModule.config({
-    cloud_name: "dq4aoi81o",
-    api_key: "179826724165611",
-    api_secret: "CIr4Ni9k_9UvVCa3UggT7VfMrHk"
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Multer + Cloudinary setup
@@ -49,7 +49,7 @@ const eventStorage = new CloudinaryStorage({
 const uploadProfile = multer({ storage: Profilestorage });
 const uploadEventPoster = multer({ storage: eventStorage });
 
-mongoose.connect("mongodb://127.0.0.1:27017/VGEC_EventManagment");
+mongoose.connect(process.env.MONGO_URI);
 
 const app = express();
 
@@ -57,7 +57,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-    origin: "http://localhost:5500", // Change to your frontend URL
+    origin: "https://new-vgec-event-management-frontend.vercel.app", // Change to your frontend URL
     credentials: true
 }))
 
@@ -323,8 +323,8 @@ app.post("/Signuproute", async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -482,8 +482,8 @@ app.post("/SentPasswordRoute", async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -756,147 +756,6 @@ app.delete("/DeleteAccountForStudent", authenticateToken, async (req, res) => {
         res.status(400).json({ message: "error to delete the account!!", Error: err });
     }
 })
-
-// app.delete("/DeleteAccountForHOD", authenticateToken, async (req, res) => {
-//     const userId = req.user.id;
-//     const userEmail = req.user.Useremail;
-//     try {
-
-//         const checkEventForApproved = await EventCRUD.find({
-//             Reuired_permission_HOD_emailid: userEmail,
-//             Event_completion_status: "Upcoming",
-//             Event_Status: "Approved"
-//         });
-
-//         if (checkEventForApproved > 0) {
-//             res.status(400).json({ message: "THERE IS EVENT WHICH IS APPROVED AND NOT DONE SO YOU CAN'T DELETE THE ACCOUNT!!" });
-//         }
-
-//         // Get all pending events
-//         const checkEventForpending = await EventCRUD.find({
-//             Reuired_permission_HOD_emailid: userEmail,
-//             Event_completion_status: "Upcoming",
-//             Event_Status: "Pending"
-//         });
-
-
-
-//         if (checkEventForpending > 0) {
-//             // Step 1: Group events by host email
-//             const hostMap = new Map();
-
-//             checkEventForpending.forEach(event => {
-//                 const email = event.Event_hoster_emailid;
-//                 if (!hostMap.has(email)) {
-//                     hostMap.set(email, []);
-//                 }
-//                 hostMap.get(email).push(event);
-//             });
-
-//             // Step 2 :  Create transporter 
-//             const transporter = nodemailer.createTransport({
-//                 service: "gmail",
-//                 auth: {
-//                     user: "220170116050@vgecg.ac.in",
-//                     pass: "wgqa nfso ptah uyjk"
-//                 }
-//             });
-
-//             // Step 3: Send emails one-by-one and track result
-//             const sendEmailToHosts = async () => {
-//                 for (const [email, events] of hostMap.entries()) {
-//                     const eventBlocks = checkEventForpending.map(event => `
-//                         <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px;">
-//                             <p style="font-size: 16px; color: #444;"><strong>    Event Name:</strong> ${event.Event_name}</p>
-//                             <p style="font-size: 16px; color: #444;"><strong> 🕒 Date:</strong> ${new Date(event.Event_date).toDateString()}</p>
-//                             <p style="font-size: 16px; color: #444;"><strong> 📍 Location:</strong> ${event.Event_location}</p>
-//                         </div>
-//                         `).join('');
-
-
-//                     const mailOptions = {
-//                         from: "220170116050@vgecg.ac.in",
-//                         to: email,
-//                         subject: "Event Deleted Due to HOD Account Removal",
-//                         html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
-//                                 <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-
-//                                     <h2 style="color: #d32f2f; text-align: center; font-size: 26px;">⚠️ Events Deleted Notice</h2>
-
-//                                     <p style="font-size: 16px; color: #555; line-height: 1.6;">
-//                                     Hello User,
-//                                     </p>
-
-//                                     <p style="font-size: 16px; color: #555; line-height: 1.6;">
-//                                     We regret to inform you that the following events, previously pending under a now-deleted HOD account, have been <span style="color: #d32f2f; font-weight: bold;">removed from the system</span>:
-//                                     </p>
-
-//                                     ${eventBlocks}
-
-//                                     <p style="font-size: 16px; color: #444; line-height: 1.6;">
-//                                     ❗ You are requested to re-organize these events under the supervision of another HOD as per departmental guidelines.
-//                                     </p>
-
-//                                     <p style="color: #d32f2f; font-size: 16px; text-align: center; font-weight: 600;">
-//                                     We appreciate your cooperation.
-//                                     </p>
-
-//                                     <p style="font-size: 14px; color: #757575; margin-top: 20px;">
-//                                     If you need help, contact your department coordinator or the VGEC Events Team.
-//                                     </p>
-
-//                                     <p style="margin-top: 30px; font-size: 16px; color: #555;">
-//                                     Regards,<br><strong>VGEC Events Team</strong>
-//                                     </p>
-//                                 </div>
-//                             </div>`
-//                     };
-//                 }
-
-//                 try {
-//                     transporter.sendMail(mailOptions, async (err, info) => {
-//                         if (err) {
-//                             console.log("Email error:", err);
-//                             return res.status(500).json({
-//                                 message: "Events deleted due to HOD removal, but failed to send email notification.",
-//                                 error: err.toString()
-//                             });
-//                         }
-
-//                         try {
-//                             // Delete HOD account
-//                             const result = await UserCRUD.findOneAndDelete({ _id: userId });
-
-//                             // Delete events approved by this HOD
-//                             const result2 = await EventCRUD.deleteMany({ Reuired_permission_HOD_emailid: userEmail });
-
-//                             if (result && result2 && result2.deletedCount > 0) {
-//                                 return res.status(200).json({
-//                                     message: "HOD account has been deleted and notification emails were sent to event organizers with pending events."
-//                                 });
-//                             } else {
-//                                 return res.status(500).json({
-//                                     message: "Failed to delete HOD account or related events."
-//                                 });
-//                             }
-//                         } catch (deleteErr) {
-//                             console.error("Deletion error:", deleteErr);
-//                             return res.status(500).json({
-//                                 message: "Server error during account or event deletion.",
-//                                 error: deleteErr.toString()
-//                             });
-//                         }
-//                     });
-//                 } catch (err) {
-//                     console.error(`❌ Failed to send email to ${email}:`, err);
-//                     throw new Error(`Email send failed for ${email}`);
-//                 }
-
-//             } catch (err) {
-//                 res.status(400).json({ message: "error to delete the account!!", Error: err });
-//             }
-//         })
-
 
 // from here the the routes is about the dashboard for the event_hoster
 app.get('/getHodEmails', authenticateToken, async (req, res) => {
@@ -1243,8 +1102,8 @@ app.put("/Approve-Event", authenticateToken, async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -1375,8 +1234,8 @@ app.delete("/DeleteAccountForHOD", authenticateToken, async (req, res) => {
             const transporter = nodemailer.createTransport({
                 service: "gmail",
                 auth: {
-                    user: "220170116050@vgecg.ac.in",
-                    pass: "wgqa nfso ptah uyjk"
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
                 }
             });
 
@@ -1479,8 +1338,8 @@ app.put("/Reject-Event", authenticateToken, async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -1615,8 +1474,8 @@ app.post("/QueryrouteForStudent", authenticateToken, async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -1688,8 +1547,8 @@ app.post("/QueryrouteForEvent_hoster", authenticateToken, async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -1761,8 +1620,8 @@ app.post("/QueryrouteForHOD", authenticateToken, async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -2040,8 +1899,8 @@ app.post("/ParticipateStudent", authenticateToken, async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: "220170116050@vgecg.ac.in",
-                pass: "wgqa nfso ptah uyjk"
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
 
@@ -2437,8 +2296,8 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
 const razorpay = new Razorpay({
-    key_id: 'rzp_test_FoIHGuTuf6DyTj',
-    key_secret: 'eWASdg7wVTpglpTJ5a6AH5Ab',
+    key_id: process.env.rzp_test_FoIHGuTuf6DyTj,
+    key_secret: process.env.eWASdg7wVTpglpTJ5a6AH5Ab,
 });
 
 app.post("/create-order", async (req, res) => {
@@ -2703,9 +2562,5 @@ cron.schedule("0 0 * * *", () => {
 
 updatePastEventStatuses();
 
-app.listen(3000, (err) => {
-    if (err) {
-        console.log("THE SERVER IS NOT STARTING ERROR:", err);
-    }
-    console.log("THE SERVER HAS BEEN STARTED AT THE PORT NUMBER : 3000");
-})
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
