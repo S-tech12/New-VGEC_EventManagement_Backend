@@ -14,6 +14,15 @@ const fs = require('fs');
 const { PassThrough } = require('stream');
 const getStream = require('get-stream');
 
+const app = express();
+
+app.use(cors({
+    origin: "https://new-vgec-event-management-frontend.vercel.app", // Change to your frontend URL
+    credentials: true
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 cloudinaryModule.config({
     cloud_name: process.env.CLOUD_NAME,
@@ -50,16 +59,6 @@ const uploadProfile = multer({ storage: Profilestorage });
 const uploadEventPoster = multer({ storage: eventStorage });
 
 mongoose.connect(process.env.MONGO_URI);
-
-const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.use(cors({
-    origin: "https://new-vgec-event-management-frontend.vercel.app", // Change to your frontend URL
-    credentials: true
-}))
 
 let Userschema = mongoose.Schema({
     Userfullname: {
