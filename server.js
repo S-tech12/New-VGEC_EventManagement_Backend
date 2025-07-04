@@ -830,7 +830,6 @@ app.post("/AddEvent", authenticateToken, uploadEventPoster.single("eventPoster")
         } else {
             // If not uploaded, use default image based on Event_type
             eventPosterUrl = path.join(__dirname,
-                "DashBoardForEventHoster",
                 "default_posters", `${Event_type}.jpg`)
 
             // manually upload the default poster to the cloudinary
