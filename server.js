@@ -115,7 +115,7 @@ let Userschema = mongoose.Schema({
     }
 }, { timestamps: true });
 
-let UserCRUD = mongoose.model("Usertable", Userschema);
+let UserCRUD = mongoose.model("UsertableForEventManagment", Userschema);
 
 const EventSchema = mongoose.Schema({
     Event_name: {
