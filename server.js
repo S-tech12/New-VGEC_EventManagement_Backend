@@ -1771,7 +1771,7 @@ app.post("/QueryrouteForStudent", authenticateToken, async (req, res) => {
 
             await resend.emails.send({
                 from: "onboarding@resend.dev",
-                to: "220170116050@vgecg.ac.in",
+                to: "smitpipalva@gmail.com",
                 reply_to: QuerySenderMail,
                 subject: `Query from Event Portal: ${QuerySubject}`,
                 html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
@@ -1902,7 +1902,7 @@ app.post("/QueryrouteForEvent_hoster", authenticateToken, async (req, res) => {
 
             await resend.emails.send({
                 from: "onboarding@resend.dev",
-                to: "220170116050@vgecg.ac.in",
+                to: "smitpipalva@gmail.com",
                 reply_to: QuerySenderMail,
                 subject: `Query from Event Portal: ${QuerySubject}`,
                 html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
@@ -2033,7 +2033,7 @@ app.post("/QueryrouteForHOD", authenticateToken, async (req, res) => {
 
             await resend.emails.send({
                 from: "onboarding@resend.dev",
-                to: "220170116050@vgecg.ac.in",
+                to: "smitpipalva@gmail.com",
                 reply_to: QuerySenderMail,
                 subject: `Query from Event Portal: ${QuerySubject}`,
                 html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
