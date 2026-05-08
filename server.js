@@ -13,8 +13,13 @@ const cron = require("node-cron");
 const fs = require('fs');
 const { PassThrough } = require('stream');
 const getStream = require('get-stream');
+const { Resend } = require("resend");
+
 
 const app = express();
+
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(cors({
     origin: "https://new-vgec-event-management-frontend.vercel.app", // Change to your frontend URL
@@ -318,42 +323,40 @@ app.post("/Signuproute", async (req, res) => {
             expiresAt: Date.now() + 10 * 60 * 100
         };
 
-        // ✅ Send Email
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        try {
 
-        const mailOptions = {
-            from: "220170116050@vgecg.ac.in",
-            to: Useremailid,
-            subject: "Your OTP for Signup",
-            text: `Your OTP is: ${otp}`,
-            html: `<div style="font-family: Arial, sans-serif; background-color: #f2f2f2; padding: 20px;">
-                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
-                        <h2 style="color: #004080;">Welcome to VGEC Events!</h2>
-                        <p>Thank you for creating an account with us.</p>
-                        <p>Your One-Time Password (OTP) is:</p>
-                        <div style="font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #333; background: #f0f0f0; padding: 10px 20px; border-radius: 8px; text-align: center; width: fit-content; margin: 20px auto;">
-                        ${otp}
-                        </div>
-                        <p style="color : red ; font-size : 22px"><b>This OTP is valid for the next 10 minutes</b>. Please do not share it with anyone.</p>
-                        <p style="margin-top: 30px;">Best regards,<br><strong>VGEC Events Team</strong></p>
-                      </div>
-                    </div>`
-        };
+            await resend.emails.send({
+                from: "220170116050@vgecg.ac.in",
+                to: Useremailid,
+                subject: "Your OTP for Signup",
+                text: `Your OTP is: ${otp}`,
+                html: `<div style="font-family: Arial, sans-serif; background-color: #f2f2f2; padding: 20px;">
+                <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <h2 style="color: #004080;">Welcome to VGEC Events!</h2>
+                    <p>Thank you for creating an account with us.</p>
+                    <p>Your One-Time Password (OTP) is:</p>
+                    <div style="font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #333; background: #f0f0f0; padding: 10px 20px; border-radius: 8px; text-align: center; width: fit-content; margin: 20px auto;">
+                    ${otp}
+                    </div>
+                    <p style="color : red ; font-size : 22px"><b>This OTP is valid for the next 10 minutes</b>. Please do not share it with anyone.</p>
+                    <p style="margin-top: 30px;">Best regards,<br><strong>VGEC Events Team</strong></p>
+                  </div>
+                </div>`
+            });
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) {
-                console.log(err);
-                return res.status(500).json({ message: "OTP sending failed" });
-            }
+            return res.status(200).json({
+                message: "OTP sent. Please enter it to complete signup."
+            });
 
-            return res.status(200).json({ message: "OTP sent. Please enter it to complete signup." });
-        });
+        } catch (err) {
+
+            console.log("RESEND ERROR:", err);
+
+            return res.status(500).json({
+                message: "OTP sending failed"
+            });
+
+        }
     } catch (err) {
         console.log("ERROR : " + err);
         res.status(500).json({ message: "SERVER ERROR!" });
@@ -477,21 +480,75 @@ app.post("/SentPasswordRoute", async (req, res) => {
 
 
 
-        // ✅ Send Email
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        //         // ✅ Send Email
+        //         const transporter = nodemailer.createTransport({
+        //             service: "gmail",
+        //             auth: {
+        //                 user: process.env.EMAIL_USER,
+        //                 pass: process.env.EMAIL_PASS
+        //             }
+        //         });
 
-        const mailOptions = {
-            from: "220170116050@vgecg.ac.in",
-            to: EmailforForgot,
-            subject: "Your Passowrd for Login",
-            text: `Your Password is: ${person.Userpassword}`,
-            html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
+        //         const mailOptions = {
+        //             from: "220170116050@vgecg.ac.in",
+        //             to: EmailforForgot,
+        //             subject: "Your Passowrd for Login",
+        //             text: `Your Password is: ${person.Userpassword}`,
+        //             html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
+        //   <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+
+        //     <h2 style="color: #2c3e50; text-align: center; font-size: 26px;">Forgot Your Password?</h2>
+
+        //     <p style="font-size: 16px; color: #555; line-height: 1.6;">
+        //       Hi there,
+        //     </p>
+
+        //     <p style="font-size: 16px; color: #555; line-height: 1.6;">
+        //       You requested to recover your <strong>VGEC Events</strong> account password. Below is your account information:
+        //     </p>
+
+        //     <!-- Username Section -->
+        //     <div style="font-size: 22px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #1a237e; background-color: #e8f0fe; padding: 14px 24px; text-align: center; border-radius: 10px; margin: 10px auto 20px auto; width: fit-content;">
+        //       Username: ${person.Username}
+        //     </div>
+
+        //     <!-- Password Section -->
+        //     <div style="font-size: 22px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #1a237e; background-color: #e8f0fe; padding: 14px 24px; text-align: center; border-radius: 10px; margin: 10px auto 20px auto; width: fit-content;">
+        //       Password: ${person.Userpassword}
+        //     </div>
+
+        //     <p style="color: #d32f2f; font-size: 16px; text-align: center; font-weight: 600;">
+        //       Please keep your credentials safe and do not share them with anyone.
+        //     </p>
+
+        //     <p style="font-size: 14px; color: #757575; margin-top: 20px;">
+        //       If you didn’t request this, please ignore this email. For your security, consider changing your password if you suspect unauthorized access.
+        //     </p>
+
+        //     <p style="margin-top: 30px; font-size: 16px; color: #555;">
+        //       Regards,<br><strong>VGEC Events Team</strong>
+        //     </p>
+        //   </div>
+        // </div>
+        // `};
+
+        //         transporter.sendMail(mailOptions, (err, info) => {
+        //             if (err) {
+        //                 console.log(err);
+        //                 return res.status(500).json({ message: "Password sending failed" });
+        //             }
+
+        //             return res.status(200).json({ message: "Password sent. Please enter it to complete Login." });
+        //         });
+
+        try {
+
+            await resend.emails.send({
+                from: "onboarding@resend.dev",
+                to: EmailforForgot,
+                subject: "Your Password for Login",
+                text: `Your Password is: ${person.Userpassword}`,
+                html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
   <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
     
     <h2 style="color: #2c3e50; text-align: center; font-size: 26px;">Forgot Your Password?</h2>
@@ -526,24 +583,28 @@ app.post("/SentPasswordRoute", async (req, res) => {
       Regards,<br><strong>VGEC Events Team</strong>
     </p>
   </div>
-</div>
-`};
+</div>`
+            });
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) {
-                console.log(err);
-                return res.status(500).json({ message: "Password sending failed" });
-            }
+            return res.status(200).json({
+                message: "Password sent. Please enter it to complete Login."
+            });
 
-            return res.status(200).json({ message: "Password sent. Please enter it to complete Login." });
-        });
+        } catch (err) {
+
+            console.log("RESEND PASSWORD ERROR:", err);
+
+            return res.status(500).json({
+                message: "Password sending failed"
+            });
+
+        }
     } catch (err) {
         console.log("ERROR : " + err);
         res.status(500).json({ message: "SERVER ERROR!" });
     }
 })
 
-// aa ek route aapne chatgpt ma thi upadelo che aani andar su thay che ke aapne token ne authenticate kre che and jo token invalid hoy ke missing hoy to tene reject kari nakhe che and jo correct hase to tene next ma java dese 
 
 // Middleware to verify token
 const authenticateToken = (req, res, next) => {
@@ -1096,228 +1157,360 @@ app.put("/Approve-Event", authenticateToken, async (req, res) => {
             return res.status(404).json({ message: "Event not found." });
         }
 
-        // ✅ Send Email
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        // // ✅ Send Email
+        // const transporter = nodemailer.createTransport({
+        //     service: "gmail",
+        //     auth: {
+        //         user: process.env.EMAIL_USER,
+        //         pass: process.env.EMAIL_PASS
+        //     }
+        // });
 
-        const mailOptions = {
-            from: "220170116050@vgecg.ac.in",
-            to: event.Event_hoster_emailid,
-            subject: "Your Event has been Approved!",
-            html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
-                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-                        
-                        <h2 style="color: #2e7d32; text-align: center; font-size: 26px;">🎉 Event Approved Successfully!</h2>
-                        
-                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                        Hello User,
-                        </p>
-                        
-                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                        We're happy to inform you that your event <strong>"${event.Event_name}"</strong> scheduled on <strong>${new Date(event.Event_date).toDateString()}</strong> has been <span style="color: #2e7d32; font-weight: bold;">approved</span> by the HOD.
-                        </p>
+        // const mailOptions = {
+        //     from: "220170116050@vgecg.ac.in",
+        //     to: event.Event_hoster_emailid,
+        //     subject: "Your Event has been Approved!",
+        //     html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
+        //             <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
 
-                        <p style="font-size: 16px; color: #444; line-height: 1.6;">
-                        ✅ Please ensure all arrangements are made well in advance.<br>
-                        📍 Location: <strong>${event.Event_location}</strong><br>
-                        🕒 Date: <strong>${new Date(event.Event_date).toDateString()}</strong>
-                        </p>
+        //                 <h2 style="color: #2e7d32; text-align: center; font-size: 26px;">🎉 Event Approved Successfully!</h2>
 
-                        <p style="color: #388e3c; font-size: 16px; text-align: center; font-weight: 600;">
-                        Best of luck with your event!
-                        </p>
+        //                 <p style="font-size: 16px; color: #555; line-height: 1.6;">
+        //                 Hello User,
+        //                 </p>
 
-                        <p style="font-size: 14px; color: #757575; margin-top: 20px;">
-                        For any issues or changes, contact your department head immediately.
-                        </p>
+        //                 <p style="font-size: 16px; color: #555; line-height: 1.6;">
+        //                 We're happy to inform you that your event <strong>"${event.Event_name}"</strong> scheduled on <strong>${new Date(event.Event_date).toDateString()}</strong> has been <span style="color: #2e7d32; font-weight: bold;">approved</span> by the HOD.
+        //                 </p>
 
-                        <p style="margin-top: 30px; font-size: 16px; color: #555;">
-                        Regards,<br><strong>VGEC Events Team</strong>
-                        </p>
-                    </div>
-                    </div> `
-        };
+        //                 <p style="font-size: 16px; color: #444; line-height: 1.6;">
+        //                 ✅ Please ensure all arrangements are made well in advance.<br>
+        //                 📍 Location: <strong>${event.Event_location}</strong><br>
+        //                 🕒 Date: <strong>${new Date(event.Event_date).toDateString()}</strong>
+        //                 </p>
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) {
-                console.log("Email error:", err);
-                return res.status(500).json({
-                    message: "Event approved, but failed to send confirmation email.",
-                    error: err.toString()
-                });
-            }
+        //                 <p style="color: #388e3c; font-size: 16px; text-align: center; font-weight: 600;">
+        //                 Best of luck with your event!
+        //                 </p>
+
+        //                 <p style="font-size: 14px; color: #757575; margin-top: 20px;">
+        //                 For any issues or changes, contact your department head immediately.
+        //                 </p>
+
+        //                 <p style="margin-top: 30px; font-size: 16px; color: #555;">
+        //                 Regards,<br><strong>VGEC Events Team</strong>
+        //                 </p>
+        //             </div>
+        //             </div> `
+        // };
+
+        // transporter.sendMail(mailOptions, (err, info) => {
+        //     if (err) {
+        //         console.log("Email error:", err);
+        //         return res.status(500).json({
+        //             message: "Event approved, but failed to send confirmation email.",
+        //             error: err.toString()
+        //         });
+        //     }
+
+        //     return res.status(200).json({
+        //         message: "Event approved successfully and email notification sent.",
+        //         updatedEvent
+        //     });
+        // });
+        try {
+
+            await resend.emails.send({
+                from: "onboarding@resend.dev",
+                to: event.Event_hoster_emailid,
+                subject: "Your Event has been Approved!",
+                html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
+                <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                    
+                    <h2 style="color: #2e7d32; text-align: center; font-size: 26px;">🎉 Event Approved Successfully!</h2>
+                    
+                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                    Hello User,
+                    </p>
+                    
+                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                    We're happy to inform you that your event <strong>"${event.Event_name}"</strong> scheduled on <strong>${new Date(event.Event_date).toDateString()}</strong> has been <span style="color: #2e7d32; font-weight: bold;">approved</span> by the HOD.
+                    </p>
+
+                    <p style="font-size: 16px; color: #444; line-height: 1.6;">
+                    ✅ Please ensure all arrangements are made well in advance.<br>
+                    📍 Location: <strong>${event.Event_location}</strong><br>
+                    🕒 Date: <strong>${new Date(event.Event_date).toDateString()}</strong>
+                    </p>
+
+                    <p style="color: #388e3c; font-size: 16px; text-align: center; font-weight: 600;">
+                    Best of luck with your event!
+                    </p>
+
+                    <p style="font-size: 14px; color: #757575; margin-top: 20px;">
+                    For any issues or changes, contact your department head immediately.
+                    </p>
+
+                    <p style="margin-top: 30px; font-size: 16px; color: #555;">
+                    Regards,<br><strong>VGEC Events Team</strong>
+                    </p>
+                </div>
+                </div>`
+            });
 
             return res.status(200).json({
                 message: "Event approved successfully and email notification sent.",
                 updatedEvent
             });
-        });
+
+        } catch (err) {
+
+            console.log("RESEND EVENT APPROVAL ERROR:", err);
+
+            return res.status(500).json({
+                message: "Event approved, but failed to send confirmation email.",
+                error: err.toString()
+            });
+
+        }
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Error approving the event. Please try again later!" });
     }
 })
-
 app.delete("/DeleteAccountForHOD", authenticateToken, async (req, res) => {
+
     const userId = req.user.id;
     let userEmail = null;
 
     try {
+
         const Available = await UserCRUD.findById(userId);
 
         if (!Available) {
-            return res.status(400).json({ message: "USER IS NOT EXIST IN THE SYSTEM!!" });
+            return res.status(400).json({
+                message: "USER IS NOT EXIST IN THE SYSTEM!!"
+            });
         }
+
         userEmail = Available.Useremail;
+
     } catch (err) {
-        return res.status(400).json({ message: "SERVER IS NOT WORKING . TRY AGAIN LATER!!" });
+
+        return res.status(400).json({
+            message: "SERVER IS NOT WORKING . TRY AGAIN LATER!!"
+        });
+
     }
 
     try {
+
         const checkEventForApproved = await EventCRUD.find({
             Reuired_permission_HOD_emailid: userEmail,
             Event_completion_status: "Upcoming",
             Event_Status: "Approved"
         });
 
-        // Get all pending events
         const checkEventForpending = await EventCRUD.find({
             Reuired_permission_HOD_emailid: userEmail,
             Event_completion_status: "Upcoming",
             Event_Status: "Pending"
         });
 
-        if (checkEventForApproved.length == 0 && checkEventForpending.length == 0) {
+        // ✅ If no active events
+        if (
+            checkEventForApproved.length === 0 &&
+            checkEventForpending.length === 0
+        ) {
 
-            const result = await UserCRUD.findOneAndDelete({ _id: userId });
+            const result = await UserCRUD.findOneAndDelete({
+                _id: userId
+            });
+
             const result2 = await EventCRUD.deleteMany({
                 Reuired_permission_HOD_emailid: userEmail,
                 Event_completion_status: "Completed"
             });
+
             const result3 = await EventCRUD.deleteMany({
                 Reuired_permission_HOD_emailid: userEmail,
                 Event_Status: "Rejected"
-            })
+            });
 
             if (result && result2 && result3) {
-                return res.status(200).json({ message: "THE ACCOUNT AND ALL THE EVENTS WHICH IS DONE UNDER YOUR APPROVAL HAS SUCCESSFULLY DELETED!!" });
+
+                return res.status(200).json({
+                    message: "THE ACCOUNT AND ALL THE EVENTS WHICH IS DONE UNDER YOUR APPROVAL HAS SUCCESSFULLY DELETED!!"
+                });
+
             } else {
-                return res.status(400).json({ message: "ERROR TO DELETE THE ACCOUNT!!" });
+
+                return res.status(400).json({
+                    message: "ERROR TO DELETE THE ACCOUNT!!"
+                });
+
             }
         }
 
+        // ❌ Approved upcoming events exist
         if (checkEventForApproved.length > 0) {
-            return res.status(400).json({ message: "THERE IS EVENT WHICH IS APPROVED AND NOT DONE SO YOU CAN'T DELETE THE ACCOUNT!!" });
+
+            return res.status(400).json({
+                message: "THERE IS EVENT WHICH IS APPROVED AND NOT DONE SO YOU CAN'T DELETE THE ACCOUNT!!"
+            });
+
         }
 
+        // ⚠️ Pending events exist
         if (checkEventForpending.length > 0) {
 
-            // Step 1: Group events by host email
+            // Group events by host email
             const hostMap = new Map();
 
             checkEventForpending.forEach(event => {
+
                 const email = event.Event_hoster_emailid;
+
                 if (!hostMap.has(email)) {
                     hostMap.set(email, []);
                 }
+
                 hostMap.get(email).push(event);
+
             });
 
-            // Step 2 :  Create transporter 
-            const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
-            });
+            let emailErrors = [];
 
-            let emailErrors = []; // 🆕 Added to collect any email send failures
+            // ✅ Send emails using Resend
             for (const [email, events] of hostMap.entries()) {
-                const eventBlocks = events.map(event => `
-                        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px;">
-                            <p style="font-size: 16px; color: #444;"><strong>    Event Name:</strong> ${event.Event_name}</p>
-                            <p style="font-size: 16px; color: #444;"><strong> 🕒 Date:</strong> ${new Date(event.Event_date).toDateString()}</p>
-                            <p style="font-size: 16px; color: #444;"><strong> 📍 Location:</strong> ${event.Event_location}</p>
-                        </div>
-                        `).join('');
 
-                const mailOptions =
-                {
-                    from: "220170116050@vgecg.ac.in",
-                    to: email,
-                    subject: "Event Deleted Due to HOD Account Removal",
-                    html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
-                            <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-                                    
-                                <h2 style="color: #d32f2f; text-align: center; font-size: 26px;">⚠️ Events Deleted Notice</h2>
-                                
-                                <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                                Hello User,
-                                </p>
-                                    
-                                <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                                We regret to inform you that the following events, previously pending under a now-deleted HOD account, have been <span style="color: #d32f2f; font-weight: bold;">removed from the system</span>:                                    </p>
-        
-                                ${eventBlocks}
-        
-                                <p style="font-size: 16px; color: #444; line-height: 1.6;">
-                                ❗ You are requested to re-organize these events under the supervision of another HOD as per departmental guidelines.
-                                </p>
-        
-                                <p style="color: #d32f2f; font-size: 16px; text-align: center; font-weight: 600;">
-                                We appreciate your cooperation.
-                                </p>
-        
-                                <p style="font-size: 14px; color: #757575; margin-top: 20px;">
-                                If you need help, contact your department coordinator or the VGEC Events Team.
-                                </p>
-    
-                                <p style="margin-top: 30px; font-size: 16px; color: #555;">
-                                Regards,<br><strong>VGEC Events Team</strong>
-                                </p>
-                            </div>
-                        </div>`
-                }
+                const eventBlocks = events.map(event => `
+                    <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px;">
+                        <p style="font-size: 16px; color: #444;">
+                            <strong>Event Name:</strong> ${event.Event_name}
+                        </p>
+
+                        <p style="font-size: 16px; color: #444;">
+                            <strong>🕒 Date:</strong> ${new Date(event.Event_date).toDateString()}
+                        </p>
+
+                        <p style="font-size: 16px; color: #444;">
+                            <strong>📍 Location:</strong> ${event.Event_location}
+                        </p>
+                    </div>
+                `).join('');
 
                 try {
-                    await transporter.sendMail(mailOptions);
-                } catch (err) {
-                    console.error(`❌ Failed to send email to ${email}:`, err);
-                    emailErrors.push({ email, error: err.toString() }); // 🆕 Collect error instead of returning
-                }
 
+                    await resend.emails.send({
+                        from: "onboarding@resend.dev",
+                        to: email,
+                        subject: "Event Deleted Due to HOD Account Removal",
+
+                        html: `
+                        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 30px;">
+
+                            <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                                    
+                                <h2 style="color: #d32f2f; text-align: center; font-size: 26px;">
+                                    ⚠️ Events Deleted Notice
+                                </h2>
+                                
+                                <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                                    Hello User,
+                                </p>
+                                    
+                                <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                                    We regret to inform you that the following events, previously pending under a now-deleted HOD account, have been 
+                                    <span style="color: #d32f2f; font-weight: bold;">
+                                        removed from the system
+                                    </span>.
+                                </p>
+
+                                ${eventBlocks}
+
+                                <p style="font-size: 16px; color: #444; line-height: 1.6;">
+                                    ❗ You are requested to re-organize these events under the supervision of another HOD as per departmental guidelines.
+                                </p>
+
+                                <p style="color: #d32f2f; font-size: 16px; text-align: center; font-weight: 600;">
+                                    We appreciate your cooperation.
+                                </p>
+
+                                <p style="font-size: 14px; color: #757575; margin-top: 20px;">
+                                    If you need help, contact your department coordinator or the VGEC Events Team.
+                                </p>
+
+                                <p style="margin-top: 30px; font-size: 16px; color: #555;">
+                                    Regards,<br>
+                                    <strong>VGEC Events Team</strong>
+                                </p>
+
+                            </div>
+
+                        </div>
+                        `
+                    });
+
+                } catch (err) {
+
+                    console.error(`❌ Failed to send email to ${email}:`, err);
+
+                    emailErrors.push({
+                        email,
+                        error: err.toString()
+                    });
+
+                }
             }
 
-            // Delete HOD account and related events
-            const result = await UserCRUD.findOneAndDelete({ _id: userId });
-            const result2 = await EventCRUD.deleteMany({ Reuired_permission_HOD_emailid: userEmail });
+            // ✅ Delete HOD + related events
+            const result = await UserCRUD.findOneAndDelete({
+                _id: userId
+            });
+
+            const result2 = await EventCRUD.deleteMany({
+                Reuired_permission_HOD_emailid: userEmail
+            });
 
             if (result && result2) {
+
+                // Partial success
                 if (emailErrors.length > 0) {
-                    // 🆕 Partial success response
+
                     return res.status(207).json({
                         message: "HOD and events deleted, but some emails failed to send.",
                         emailErrors
                     });
+
                 }
-                // ✅ Success case
+
+                // Full success
                 return res.status(200).json({
                     message: "HOD account and events deleted successfully. Notifications sent to all users."
                 });
+
             } else {
-                return res.status(500).json({ message: "Failed to delete HOD account or events." });
+
+                return res.status(500).json({
+                    message: "Failed to delete HOD account or events."
+                });
+
             }
         }
+
     } catch (err) {
-        res.status(400).json({ message: "error to delete the account!!", Error: err });
+
+        console.log("DELETE HOD ERROR:", err);
+
+        return res.status(400).json({
+            message: "error to delete the account!!",
+            Error: err.toString()
+        });
+
     }
-})
+});
+
 app.put("/Reject-Event", authenticateToken, async (req, res) => {
     try {
         const event = req.body;
@@ -1332,65 +1525,118 @@ app.put("/Reject-Event", authenticateToken, async (req, res) => {
             return res.status(404).json({ message: "Event not found." });
         }
 
-        // ✅ Send Email
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        // // ✅ Send Email
+        // const transporter = nodemailer.createTransport({
+        //     service: "gmail",
+        //     auth: {
+        //         user: process.env.EMAIL_USER,
+        //         pass: process.env.EMAIL_PASS
+        //     }
+        // });
 
-        const mailOptions = {
-            from: "220170116050@vgecg.ac.in",
-            to: event.Event_hoster_emailid,
-            subject: "Your Event has been Rejected!",
-            html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fff0f0; padding: 30px;">
-                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                        
-                        <h2 style="color: #c62828; text-align: center; font-size: 26px;">Event Request Rejected</h2>
-                        
-                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                        Hello User,
-                        </p>
-                        
-                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                        We regret to inform you that your event <strong>"${event.Event_name}"</strong> scheduled on <strong>${new Date(event.Event_date).toDateString()}</strong> has been <span style="color: #c62828; font-weight: bold;">rejected</span> by the HOD.
-                        </p>
+        // const mailOptions = {
+        //     from: "220170116050@vgecg.ac.in",
+        //     to: event.Event_hoster_emailid,
+        //     subject: "Your Event has been Rejected!",
+        //     html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fff0f0; padding: 30px;">
+        //             <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 
-                        <p style="font-size: 16px; color: #444; line-height: 1.6;">
-                        If you have any questions or need further assistance, please contact your department head for more details.
-                        </p>
+        //                 <h2 style="color: #c62828; text-align: center; font-size: 26px;">Event Request Rejected</h2>
 
-                        <p style="color: #d32f2f; font-size: 16px; text-align: center; font-weight: 600;">
-                        Please review your event plan and consider resubmitting with any necessary changes.
-                        </p>
+        //                 <p style="font-size: 16px; color: #555; line-height: 1.6;">
+        //                 Hello User,
+        //                 </p>
 
-                        <p style="font-size: 14px; color: #757575; margin-top: 20px;">
-                        Thank you for your understanding.
-                        </p>
+        //                 <p style="font-size: 16px; color: #555; line-height: 1.6;">
+        //                 We regret to inform you that your event <strong>"${event.Event_name}"</strong> scheduled on <strong>${new Date(event.Event_date).toDateString()}</strong> has been <span style="color: #c62828; font-weight: bold;">rejected</span> by the HOD.
+        //                 </p>
 
-                        <p style="margin-top: 30px; font-size: 16px; color: #555;">
-                        Regards,<br><strong>VGEC Events Team</strong>
-                        </p>
-                    </div>
-                    </div> `
-        };
+        //                 <p style="font-size: 16px; color: #444; line-height: 1.6;">
+        //                 If you have any questions or need further assistance, please contact your department head for more details.
+        //                 </p>
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) {
-                console.log("Email error:", err);
-                return res.status(500).json({
-                    message: "Event rejected, but failed to send confirmation email.",
-                    error: err.toString()
-                });
-            }
+        //                 <p style="color: #d32f2f; font-size: 16px; text-align: center; font-weight: 600;">
+        //                 Please review your event plan and consider resubmitting with any necessary changes.
+        //                 </p>
+
+        //                 <p style="font-size: 14px; color: #757575; margin-top: 20px;">
+        //                 Thank you for your understanding.
+        //                 </p>
+
+        //                 <p style="margin-top: 30px; font-size: 16px; color: #555;">
+        //                 Regards,<br><strong>VGEC Events Team</strong>
+        //                 </p>
+        //             </div>
+        //             </div> `
+        // };
+
+        // transporter.sendMail(mailOptions, (err, info) => {
+        //     if (err) {
+        //         console.log("Email error:", err);
+        //         return res.status(500).json({
+        //             message: "Event rejected, but failed to send confirmation email.",
+        //             error: err.toString()
+        //         });
+        //     }
+
+        //     return res.status(200).json({
+        //         message: "Event rejected successfully and email notification sent.",
+        //         updatedEvent
+        //     });
+        // });
+        try {
+
+            await resend.emails.send({
+                from: "onboarding@resend.dev",
+                to: event.Event_hoster_emailid,
+                subject: "Your Event has been Rejected!",
+                html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fff0f0; padding: 30px;">
+                <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    
+                    <h2 style="color: #c62828; text-align: center; font-size: 26px;">Event Request Rejected</h2>
+                    
+                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                    Hello User,
+                    </p>
+                    
+                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                    We regret to inform you that your event <strong>"${event.Event_name}"</strong> scheduled on <strong>${new Date(event.Event_date).toDateString()}</strong> has been <span style="color: #c62828; font-weight: bold;">rejected</span> by the HOD.
+                    </p>
+
+                    <p style="font-size: 16px; color: #444; line-height: 1.6;">
+                    If you have any questions or need further assistance, please contact your department head for more details.
+                    </p>
+
+                    <p style="color: #d32f2f; font-size: 16px; text-align: center; font-weight: 600;">
+                    Please review your event plan and consider resubmitting with any necessary changes.
+                    </p>
+
+                    <p style="font-size: 14px; color: #757575; margin-top: 20px;">
+                    Thank you for your understanding.
+                    </p>
+
+                    <p style="margin-top: 30px; font-size: 16px; color: #555;">
+                    Regards,<br><strong>VGEC Events Team</strong>
+                    </p>
+                </div>
+                </div>`
+            });
 
             return res.status(200).json({
                 message: "Event rejected successfully and email notification sent.",
                 updatedEvent
             });
-        });
+
+        } catch (err) {
+
+            console.log("RESEND EVENT REJECTION ERROR:", err);
+
+            return res.status(500).json({
+                message: "Event rejected, but failed to send confirmation email.",
+                error: err.toString()
+            });
+
+        }
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Error rejecting the event. Please try again later!" });
@@ -1468,60 +1714,118 @@ app.post("/QueryrouteForStudent", authenticateToken, async (req, res) => {
             return res.status(400).json({ message: "This Website is just useful for the VGEC Student Enter Your College id!!" });
         }
 
-        // ✅ Send Email
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        // // ✅ Send Email
+        // const transporter = nodemailer.createTransport({
+        //     service: "gmail",
+        //     auth: {
+        //         user: process.env.EMAIL_USER,
+        //         pass: process.env.EMAIL_PASS
+        //     }
+        // });
 
-        const mailOptions = {
-            from: QuerySenderMail,
-            to: "220170116050@vgecg.ac.in",
-            subject: `Query from Event Portal: ${QuerySubject}`,
-            html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
-                    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        // const mailOptions = {
+        //     from: QuerySenderMail,
+        //     to: "220170116050@vgecg.ac.in",
+        //     subject: `Query from Event Portal: ${QuerySubject}`,
+        //     html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
+        //             <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 
-                        <!-- Header -->
-                        <div style="background-color: #007bff; color: white; padding: 20px 30px;">
-                        <h2 style="margin: 0;">🎓 [Student Query] - New Submission</h2>
-                        </div>
+        //                 <!-- Header -->
+        //                 <div style="background-color: #007bff; color: white; padding: 20px 30px;">
+        //                 <h2 style="margin: 0;">🎓 [Student Query] - New Submission</h2>
+        //                 </div>
 
-                        <!-- Content -->
-                        <div style="padding: 30px;">
-                        <p style="font-size: 16px; color: #333;">
-                            You’ve received a new <strong>student</strong> query via the VGEC Event Hosting platform.
-                        </p>
+        //                 <!-- Content -->
+        //                 <div style="padding: 30px;">
+        //                 <p style="font-size: 16px; color: #333;">
+        //                     You’ve received a new <strong>student</strong> query via the VGEC Event Hosting platform.
+        //                 </p>
 
-                        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        //                 <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
 
-                        <p><strong>📧 Sender Email:</strong> <span style="color: #007bff;">${QuerySenderMail}</span></p>
-                        <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
+        //                 <p><strong>📧 Sender Email:</strong> <span style="color: #007bff;">${QuerySenderMail}</span></p>
+        //                 <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
 
-                        <div style="margin-top: 20px;">
-                            <strong>💬 Message:</strong>
-                            <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #007bff; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
-                            ${QueryMessage}
-                            </div>
-                        </div>
+        //                 <div style="margin-top: 20px;">
+        //                     <strong>💬 Message:</strong>
+        //                     <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #007bff; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
+        //                     ${QueryMessage}
+        //                     </div>
+        //                 </div>
 
-                        <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent from a <strong>VGEC student</strong> through the Event Hosting Portal.</p>
-                        </div>
+        //                 <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent from a <strong>VGEC student</strong> through the Event Hosting Portal.</p>
+        //                 </div>
 
-                        <!-- Footer -->
-                        <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
-                        &copy; 2025 VGEC Events | All rights reserved.
-                        </div>
+        //                 <!-- Footer -->
+        //                 <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
+        //                 &copy; 2025 VGEC Events | All rights reserved.
+        //                 </div>
 
+        //             </div>
+        //             </div>`
+        // };
+
+        // await transporter.sendMail(mailOptions);
+        // return res.status(200).json({ message: "Your message has been sent successfully!" });
+        try {
+
+            await resend.emails.send({
+                from: "onboarding@resend.dev",
+                to: "220170116050@vgecg.ac.in",
+                reply_to: QuerySenderMail,
+                subject: `Query from Event Portal: ${QuerySubject}`,
+                html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
+                <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+                    <!-- Header -->
+                    <div style="background-color: #007bff; color: white; padding: 20px 30px;">
+                    <h2 style="margin: 0;">🎓 [Student Query] - New Submission</h2>
                     </div>
-                    </div>`
-        };
 
-        await transporter.sendMail(mailOptions);
-        return res.status(200).json({ message: "Your message has been sent successfully!" });
+                    <!-- Content -->
+                    <div style="padding: 30px;">
+                    <p style="font-size: 16px; color: #333;">
+                        You’ve received a new <strong>student</strong> query via the VGEC Event Hosting platform.
+                    </p>
 
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+
+                    <p><strong>📧 Sender Email:</strong> <span style="color: #007bff;">${QuerySenderMail}</span></p>
+                    <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
+
+                    <div style="margin-top: 20px;">
+                        <strong>💬 Message:</strong>
+                        <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #007bff; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
+                        ${QueryMessage}
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent from a <strong>VGEC student</strong> through the Event Hosting Portal.</p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
+                    &copy; 2025 VGEC Events | All rights reserved.
+                    </div>
+
+                </div>
+                </div>`
+            });
+
+            return res.status(200).json({
+                message: "Your message has been sent successfully!"
+            });
+
+        } catch (err) {
+
+            console.log("RESEND QUERY ERROR:", err);
+
+            return res.status(500).json({
+                message: "Failed to send your message.",
+                error: err.toString()
+            });
+
+        }
     } catch (err) {
         console.error("Error sending query mail:", err);
         return res.status(500).json({ message: "Server error. Could not send your message. Try again later!" });
@@ -1541,60 +1845,118 @@ app.post("/QueryrouteForEvent_hoster", authenticateToken, async (req, res) => {
             return res.status(400).json({ message: "This Website is just useful for the VGEC Student Enter Your College id!!" });
         }
 
-        // ✅ Send Email
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        // // ✅ Send Email
+        // const transporter = nodemailer.createTransport({
+        //     service: "gmail",
+        //     auth: {
+        //         user: process.env.EMAIL_USER,
+        //         pass: process.env.EMAIL_PASS
+        //     }
+        // });
 
-        const mailOptions = {
-            from: QuerySenderMail,
-            to: "220170116050@vgecg.ac.in",
-            subject: `Query from Event Portal: ${QuerySubject}`,
-            html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
-                    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        // const mailOptions = {
+        //     from: QuerySenderMail,
+        //     to: "220170116050@vgecg.ac.in",
+        //     subject: `Query from Event Portal: ${QuerySubject}`,
+        //     html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
+        //             <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 
-                        <!-- Header -->
-                        <div style="background-color: #6f42c1; color: white; padding: 20px 30px;">
-                        <h2 style="margin: 0;">🎤 [Event Hoster] - New Query</h2>
-                        </div>
+        //                 <!-- Header -->
+        //                 <div style="background-color: #6f42c1; color: white; padding: 20px 30px;">
+        //                 <h2 style="margin: 0;">🎤 [Event Hoster] - New Query</h2>
+        //                 </div>
 
-                        <!-- Content -->
-                        <div style="padding: 30px;">
-                        <p style="font-size: 16px; color: #333;">
-                            You’ve received a new query from an <strong>event hoster</strong> via the VGEC platform.
-                        </p>
+        //                 <!-- Content -->
+        //                 <div style="padding: 30px;">
+        //                 <p style="font-size: 16px; color: #333;">
+        //                     You’ve received a new query from an <strong>event hoster</strong> via the VGEC platform.
+        //                 </p>
 
-                        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        //                 <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
 
-                        <p><strong>📧 Sender Email:</strong> <span style="color: #6f42c1;">${QuerySenderMail}</span></p>
-                        <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
+        //                 <p><strong>📧 Sender Email:</strong> <span style="color: #6f42c1;">${QuerySenderMail}</span></p>
+        //                 <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
 
-                        <div style="margin-top: 20px;">
-                            <strong>💬 Message:</strong>
-                            <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #6f42c1; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
-                            ${QueryMessage}
-                            </div>
-                        </div>
+        //                 <div style="margin-top: 20px;">
+        //                     <strong>💬 Message:</strong>
+        //                     <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #6f42c1; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
+        //                     ${QueryMessage}
+        //                     </div>
+        //                 </div>
 
-                        <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent from an <strong>event hoster</strong> through the VGEC Event Hosting Portal.</p>
-                        </div>
+        //                 <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent from an <strong>event hoster</strong> through the VGEC Event Hosting Portal.</p>
+        //                 </div>
 
-                        <!-- Footer -->
-                        <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
-                        &copy; 2025 VGEC Events | All rights reserved.
-                        </div>
+        //                 <!-- Footer -->
+        //                 <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
+        //                 &copy; 2025 VGEC Events | All rights reserved.
+        //                 </div>
 
+        //             </div>
+        //             </div>`
+        // };
+
+        // await transporter.sendMail(mailOptions);
+        // return res.status(200).json({ message: "Your message has been sent successfully!" });
+        try {
+
+            await resend.emails.send({
+                from: "onboarding@resend.dev",
+                to: "220170116050@vgecg.ac.in",
+                reply_to: QuerySenderMail,
+                subject: `Query from Event Portal: ${QuerySubject}`,
+                html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
+                <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+                    <!-- Header -->
+                    <div style="background-color: #6f42c1; color: white; padding: 20px 30px;">
+                    <h2 style="margin: 0;">🎤 [Event Hoster] - New Query</h2>
                     </div>
-                    </div>`
-        };
 
-        await transporter.sendMail(mailOptions);
-        return res.status(200).json({ message: "Your message has been sent successfully!" });
+                    <!-- Content -->
+                    <div style="padding: 30px;">
+                    <p style="font-size: 16px; color: #333;">
+                        You’ve received a new query from an <strong>event hoster</strong> via the VGEC platform.
+                    </p>
 
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+
+                    <p><strong>📧 Sender Email:</strong> <span style="color: #6f42c1;">${QuerySenderMail}</span></p>
+                    <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
+
+                    <div style="margin-top: 20px;">
+                        <strong>💬 Message:</strong>
+                        <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #6f42c1; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
+                        ${QueryMessage}
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent from an <strong>event hoster</strong> through the VGEC Event Hosting Portal.</p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
+                    &copy; 2025 VGEC Events | All rights reserved.
+                    </div>
+
+                </div>
+                </div>`
+            });
+
+            return res.status(200).json({
+                message: "Your message has been sent successfully!"
+            });
+
+        } catch (err) {
+
+            console.log("RESEND EVENT HOSTER QUERY ERROR:", err);
+
+            return res.status(500).json({
+                message: "Failed to send your message.",
+                error: err.toString()
+            });
+
+        }
     } catch (err) {
         console.error("Error sending query mail:", err);
         return res.status(500).json({ message: "Server error. Could not send your message. Try again later!" });
@@ -1614,60 +1976,118 @@ app.post("/QueryrouteForHOD", authenticateToken, async (req, res) => {
             return res.status(400).json({ message: "Please enter the correct Email-Id" });
         }
 
-        // ✅ Send Email
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        // // ✅ Send Email
+        // const transporter = nodemailer.createTransport({
+        //     service: "gmail",
+        //     auth: {
+        //         user: process.env.EMAIL_USER,
+        //         pass: process.env.EMAIL_PASS
+        //     }
+        // });
 
-        const mailOptions = {
-            from: QuerySenderMail,
-            to: "220170116050@vgecg.ac.in",
-            subject: `Query from Event Portal: ${QuerySubject}`,
-            html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
-                    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        // const mailOptions = {
+        //     from: QuerySenderMail,
+        //     to: "220170116050@vgecg.ac.in",
+        //     subject: `Query from Event Portal: ${QuerySubject}`,
+        //     html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
+        //             <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 
-                        <!-- Header -->
-                        <div style="background-color: #218838; color: white; padding: 20px 30px;">
-                        <h2 style="margin: 0;">🏫 [HOD Message] - New Query Received</h2>
-                        </div>
+        //                 <!-- Header -->
+        //                 <div style="background-color: #218838; color: white; padding: 20px 30px;">
+        //                 <h2 style="margin: 0;">🏫 [HOD Message] - New Query Received</h2>
+        //                 </div>
 
-                        <!-- Content -->
-                        <div style="padding: 30px;">
-                        <p style="font-size: 16px; color: #333;">
-                            A new query has been received from a <strong>Head of Department</strong> via the VGEC Event Hosting Portal.
-                        </p>
+        //                 <!-- Content -->
+        //                 <div style="padding: 30px;">
+        //                 <p style="font-size: 16px; color: #333;">
+        //                     A new query has been received from a <strong>Head of Department</strong> via the VGEC Event Hosting Portal.
+        //                 </p>
 
-                        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        //                 <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
 
-                        <p><strong>📧 Sender Email:</strong> <span style="color: #218838;">${QuerySenderMail}</span></p>
-                        <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
+        //                 <p><strong>📧 Sender Email:</strong> <span style="color: #218838;">${QuerySenderMail}</span></p>
+        //                 <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
 
-                        <div style="margin-top: 20px;">
-                            <strong>💬 Message:</strong>
-                            <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #218838; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
-                            ${QueryMessage}
-                            </div>
-                        </div>
+        //                 <div style="margin-top: 20px;">
+        //                     <strong>💬 Message:</strong>
+        //                     <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #218838; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
+        //                     ${QueryMessage}
+        //                     </div>
+        //                 </div>
 
-                        <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent by a <strong>VGEC HOD</strong> through the Event Hosting Portal.</p>
-                        </div>
+        //                 <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent by a <strong>VGEC HOD</strong> through the Event Hosting Portal.</p>
+        //                 </div>
 
-                        <!-- Footer -->
-                        <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
-                        &copy; 2025 VGEC Events | All rights reserved.
-                        </div>
+        //                 <!-- Footer -->
+        //                 <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
+        //                 &copy; 2025 VGEC Events | All rights reserved.
+        //                 </div>
 
+        //             </div>
+        //             </div>`
+        // };
+
+        // await transporter.sendMail(mailOptions);
+        // return res.status(200).json({ message: "Your message has been sent successfully!" });
+        try {
+
+            await resend.emails.send({
+                from: "onboarding@resend.dev",
+                to: "220170116050@vgecg.ac.in",
+                reply_to: QuerySenderMail,
+                subject: `Query from Event Portal: ${QuerySubject}`,
+                html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 30px;">
+                <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+                    <!-- Header -->
+                    <div style="background-color: #218838; color: white; padding: 20px 30px;">
+                    <h2 style="margin: 0;">🏫 [HOD Message] - New Query Received</h2>
                     </div>
-                    </div>`
-        };
 
-        await transporter.sendMail(mailOptions);
-        return res.status(200).json({ message: "Your message has been sent successfully!" });
+                    <!-- Content -->
+                    <div style="padding: 30px;">
+                    <p style="font-size: 16px; color: #333;">
+                        A new query has been received from a <strong>Head of Department</strong> via the VGEC Event Hosting Portal.
+                    </p>
 
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+
+                    <p><strong>📧 Sender Email:</strong> <span style="color: #218838;">${QuerySenderMail}</span></p>
+                    <p><strong>📌 Subject:</strong> <span style="color: #333;">${QuerySubject}</span></p>
+
+                    <div style="margin-top: 20px;">
+                        <strong>💬 Message:</strong>
+                        <div style="background-color: #f9f9f9; padding: 15px; border-left: 5px solid #218838; font-style: italic; color: #444; margin-top: 10px; font-size: 20px">
+                        ${QueryMessage}
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 30px; font-size: 14px; color: #888;">This message was sent by a <strong>VGEC HOD</strong> through the Event Hosting Portal.</p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 13px; color: #999;">
+                    &copy; 2025 VGEC Events | All rights reserved.
+                    </div>
+
+                </div>
+                </div>`
+            });
+
+            return res.status(200).json({
+                message: "Your message has been sent successfully!"
+            });
+
+        } catch (err) {
+
+            console.log("RESEND HOD QUERY ERROR:", err);
+
+            return res.status(500).json({
+                message: "Failed to send your message.",
+                error: err.toString()
+            });
+
+        }
     } catch (err) {
         console.error("Error sending query mail:", err);
         return res.status(500).json({ message: "Server error. Could not send your message. Try again later!" });
@@ -1893,74 +2313,89 @@ app.post("/ParticipateStudent", authenticateToken, async (req, res) => {
             receiptBuffer = await getStream.buffer(passthroughStream);
         }
 
-        // 5. Send confirmation email with optional attachment
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        try {
 
-        const mailOptions = {
-            from: "220170116050@vgecg.ac.in",
-            to: UserData.Useremail,
-            subject: `Enrollment Confirmed for "${event.Event_name}" – VGEC Events`,
-            html: `<div style="font-family: Arial, sans-serif; background-color: #e6f2ff; padding: 20px;">
-                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-                        <h2 style="color: #004080; text-align: center;">🎉 Enrollment Confirmed!</h2>
-                        
-                        <p style="font-size: 16px; color: #333;">Hello <strong>${UserData.Userfullname}</strong>,</p>
-                        
-                        <p style="font-size: 16px; color: #333;">
-                        Congratulations! You have successfully enrolled in the event <strong style="color: #004080;">${event.Event_name}</strong> organized by VGEC Events.
-                        </p>
+            await resend.emails.send({
+                from: "onboarding@resend.dev",
+                to: UserData.Useremail,
+                subject: `Enrollment Confirmed for "${event.Event_name}" – VGEC Events`,
 
-                        <div style="background-color: #f2f9ff; border: 1px solid #cce0ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                        <h3 style="color:rgb(10, 12, 14);">📋 Event Details</h3>
-                        <p><strong>Event Name:</strong> ${event.Event_name}</p>
-                        <p><strong>Event Date:</strong> ${event.Event_date}</p>
-                        <p><strong>Venue:</strong> ${event.Event_location}</p>
-                        <p><strong>Time:</strong> ${event.from_time} : ${event.to_time}</p>
-                        </div>
+                html: `<div style="font-family: Arial, sans-serif; background-color: #e6f2ff; padding: 20px;">
+                <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                    <h2 style="color: #004080; text-align: center;">🎉 Enrollment Confirmed!</h2>
+                    
+                    <p style="font-size: 16px; color: #333;">
+                        Hello <strong>${UserData.Userfullname}</strong>,
+                    </p>
+                    
+                    <p style="font-size: 16px; color: #333;">
+                    Congratulations! You have successfully enrolled in the event 
+                    <strong style="color: #004080;">${event.Event_name}</strong> organized by VGEC Events.
+                    </p>
 
-                        <div style="background-color: #fff8e6; border: 1px solid #ffe0b3; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                        <h3 style="color: #996600;">🙋 Your Information</h3>
-                        <p><strong>Name:</strong> ${UserData.Userfullname}</p>
-                        <p><strong>Enrollment No:</strong> ${UserData.Useremail.substring(0, 12)}</p>
-                        <p><strong>Email:</strong> ${UserData.Useremail}</p>
-                        <p><strong>Branch:</strong> ${UserData.Userbranch}</p>
-                        </div>
-
-                        <p style="font-size: 16px; color: #444;">
-                        Please keep this email for your records. You may be asked to show confirmation during entry. Stay updated for further announcements or instructions regarding the event.
-                        </p>
-
-                        <p style="color: #b30000; font-weight: bold; font-size: 16px;">⚠️ Do not share your enrollment details with anyone.</p>
-
-                        <p style="margin-top: 30px; font-size: 16px;">Best wishes,<br><strong style="color: #004080;">VGEC Events Team</strong></p>
-
-                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
-                        <p style="font-size: 13px; color: #777; text-align: center;">
-                        This is an automated message. Please do not reply directly to this email.
-                        </p>
+                    <div style="background-color: #f2f9ff; border: 1px solid #cce0ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h3 style="color:rgb(10, 12, 14);">📋 Event Details</h3>
+                    <p><strong>Event Name:</strong> ${event.Event_name}</p>
+                    <p><strong>Event Date:</strong> ${event.Event_date}</p>
+                    <p><strong>Venue:</strong> ${event.Event_location}</p>
+                    <p><strong>Time:</strong> ${event.from_time} : ${event.to_time}</p>
                     </div>
-                    </div>`,
-            attachments: event.Event_payment === "Paid" ? [{
-                filename: `FeeReceipt_${event.Event_name}.pdf`,
-                content: receiptBuffer,
-                contentType: 'application/pdf'
-            }] : []
-        };
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) {
-                console.log(err);
-                return res.status(500).json({ message: "OTP sending failed" });
-            }
+                    <div style="background-color: #fff8e6; border: 1px solid #ffe0b3; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: #996600;">🙋 Your Information</h3>
+                    <p><strong>Name:</strong> ${UserData.Userfullname}</p>
+                    <p><strong>Enrollment No:</strong> ${UserData.Useremail.substring(0, 12)}</p>
+                    <p><strong>Email:</strong> ${UserData.Useremail}</p>
+                    <p><strong>Branch:</strong> ${UserData.Userbranch}</p>
+                    </div>
 
-            return res.status(200).json({ message: "Enrollment successful!! Detail has been sent to your registred e-mail!!" });
-        });
+                    <p style="font-size: 16px; color: #444;">
+                    Please keep this email for your records. You may be asked to show confirmation during entry. Stay updated for further announcements or instructions regarding the event.
+                    </p>
+
+                    <p style="color: #b30000; font-weight: bold; font-size: 16px;">
+                    ⚠️ Do not share your enrollment details with anyone.
+                    </p>
+
+                    <p style="margin-top: 30px; font-size: 16px;">
+                    Best wishes,<br>
+                    <strong style="color: #004080;">VGEC Events Team</strong>
+                    </p>
+
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
+
+                    <p style="font-size: 13px; color: #777; text-align: center;">
+                    This is an automated message. Please do not reply directly to this email.
+                    </p>
+
+                </div>
+                </div>`,
+
+                attachments: event.Event_payment === "Paid"
+                    ? [
+                        {
+                            filename: `FeeReceipt_${event.Event_name}.pdf`,
+                            content: receiptBuffer.toString("base64")
+                        }
+                    ]
+                    : []
+
+            });
+
+            return res.status(200).json({
+                message: "Enrollment successful!! Detail has been sent to your registered e-mail!!"
+            });
+
+        } catch (err) {
+
+            console.error("RESEND ENROLLMENT EMAIL ERROR:", err);
+
+            return res.status(500).json({
+                message: "Enrollment completed but email sending failed.",
+                error: err.toString()
+            });
+
+        }
         res.status(200).json({ message: "Enrollment successful!" });
 
     } catch (err) {
